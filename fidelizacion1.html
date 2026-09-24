@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fidelización</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--verde:#334155;--verde-claro:#475569;--verde-suave:#e2e8f0;--tierra:#d97706;--tierra-claro:#f59e0b;--crema:#fefae0;--crema2:#f5f0e8;--gris:#374151;--gris-claro:#f3f4f6;--texto:#000;--blanco:#fff;--rojo:#c0392b;--amarillo:#f59e0b;--sombra:0 4px 24px rgba(51,65,85,.10);--sombra2:0 2px 8px rgba(0,0,0,.08);--radio:14px;--radio-sm:8px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--crema2);color:var(--texto);min-height:100vh;display:flex;flex-direction:column;}
+header{background:linear-gradient(135deg,var(--verde) 0%,var(--verde-claro) 100%);color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:60px;box-shadow:0 2px 16px rgba(51,65,85,.25);position:sticky;top:0;z-index:100;}
+.hlogo{display:flex;align-items:center;gap:9px;}
+.hlogo .ic{font-size:22px;}
+.hlogo .nombre{font-family:'Fraunces',serif;font-size:18px;font-weight:700;}
+.hlogo .sub{font-size:10px;opacity:.75;letter-spacing:.4px;}
+.hinfo{display:flex;align-items:center;gap:14px;font-size:13px;}
+.hinfo button{background:rgba(255,255,255,.15);border:none;color:#fff;padding:7px 13px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;}
+.hinfo button:hover{background:rgba(255,255,255,.25);}
+nav{background:var(--blanco);border-bottom:2px solid var(--verde-suave);display:flex;gap:2px;padding:0 12px;position:sticky;top:60px;z-index:99;overflow-x:auto;}
+.tab{display:flex;align-items:center;gap:6px;padding:11px 16px;cursor:pointer;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--gris);white-space:nowrap;border-bottom:3px solid transparent;}
+.tab.activo{color:var(--verde);border-bottom-color:var(--verde);}
+main{flex:1;padding:20px;max-width:1000px;margin:0 auto;width:100%;}
+.modulo{display:none;}
+.modulo.activo{display:block;}
+.panel{background:var(--blanco);border-radius:var(--radio);box-shadow:var(--sombra);padding:20px;margin-bottom:16px;}
+.ptit{font-family:'Fraunces',serif;font-size:19px;font-weight:700;color:var(--verde);margin-bottom:14px;}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px;}
+.scard{background:var(--blanco);border-radius:var(--radio);padding:14px 16px;box-shadow:var(--sombra2);border-left:4px solid var(--verde-claro);}
+.scard.ti{border-left-color:var(--tierra);}
+.snum{font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:var(--verde);}
+.scard.ti .snum{color:var(--tierra);}
+.slbl{font-size:11px;color:var(--gris);margin-top:2px;}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg label{font-size:11px;font-weight:700;color:var(--verde);}
+.fg input,.fg select{border:1.5px solid #e5e7eb;border-radius:var(--radio-sm);padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--crema);color:var(--texto);outline:none;}
+.fg input:focus,.fg select:focus{border-color:var(--verde-claro);background:#fff;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 16px;border-radius:var(--radio-sm);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;}
+.bv{background:var(--verde);color:#fff;} .bv:hover{background:var(--verde-claro);}
+.bt{background:var(--tierra);color:#fff;} .bt:hover{background:var(--tierra-claro);}
+.br{background:var(--rojo);color:#fff;} .br:hover{background:#e74c3c;}
+.bg{background:var(--gris-claro);color:var(--texto);border:1.5px solid #e5e7eb;} .bg:hover{background:#e9ecef;}
+.bsm{padding:5px 10px;font-size:11px;}
+.brow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;justify-content:space-between;}
+.bus{display:flex;align-items:center;gap:7px;background:var(--crema);border:1.5px solid #e5e7eb;border-radius:var(--radio-sm);padding:8px 12px;flex:1;max-width:320px;}
+.bus input{border:none;background:none;outline:none;font-size:14px;flex:1;}
+.twrap{overflow-x:auto;border-radius:var(--radio-sm);border:1px solid #e5e7eb;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr{background:linear-gradient(135deg,var(--verde) 0%,var(--verde-claro) 100%);color:#fff;}
+thead th{padding:10px 13px;text-align:left;font-weight:600;font-size:11px;}
+tbody tr{border-bottom:1px solid #f0f0f0;}
+tbody tr:hover{background:var(--verde-suave);}
+tbody td{padding:9px 13px;vertical-align:middle;}
+.bdg{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;background:var(--verde-suave);color:var(--verde);}
+.bdg.tierra{background:#fbe8dc;color:var(--tierra);}
+.vacio{text-align:center;padding:34px 16px;color:#9ca3af;font-size:13px;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.modal-bg.activo{display:flex;}
+.modal{background:#fff;border-radius:var(--radio);max-width:420px;width:100%;max-height:90vh;overflow-y:auto;}
+.mhead{padding:16px 20px;border-bottom:1px solid #eee;font-family:'Fraunces',serif;font-weight:700;color:var(--verde);font-size:16px;}
+.mbody{padding:18px 20px;display:flex;flex-direction:column;gap:12px;}
+.mfoot{padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:8px;}
+.toast{position:fixed;bottom:18px;right:18px;background:var(--verde);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:var(--sombra);z-index:300;opacity:0;transition:opacity .25s;pointer-events:none;}
+.toast.mostrar{opacity:1;}
+.toast.r{background:var(--rojo);} .toast.a{background:var(--tierra);}
+.err{color:var(--rojo);font-size:12px;display:none;}
+.login-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{background:#fff;border-radius:var(--radio);box-shadow:var(--sombra);padding:34px 30px;max-width:340px;width:100%;}
+.login-box h1{font-family:'Fraunces',serif;color:var(--verde);font-size:22px;margin-bottom:4px;}
+.login-box p{font-size:12px;color:#888;margin-bottom:20px;}
+.hist{max-height:280px;overflow-y:auto;}
+.hitem{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13px;}
+.hitem .htp{color:#888;font-size:11px;}
+@media(max-width:560px){.sgrid{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<div id="login-wrap" class="login-wrap">
+  <div class="login-box">
+    <h1>🎁 Fidelización</h1>
+    <p>Ingresá con tu usuario y contraseña.</p>
+    <div class="fg" style="margin-bottom:10px"><label>Usuario</label><input id="login-usr" placeholder="usuario"></div>
+    <div class="fg" style="margin-bottom:10px"><label>Contraseña</label><input id="login-pass" type="password" placeholder="••••••••"></div>
+    <div class="err" id="login-err"></div>
+    <button class="btn bv" style="width:100%;justify-content:center;margin-top:6px" onclick="doLogin()">Ingresar</button>
+  </div>
+</div>
+
+<div id="app-wrap" style="display:none">
+  <header>
+    <div class="hlogo"><span class="ic">🎁</span><div><div class="nombre">Fidelización</div><div class="sub" id="hdr-negocio"></div></div></div>
+    <div class="hinfo"><span id="hdr-usr"></span><button onclick="doLogout()">Salir</button></div>
+  </header>
+  <nav>
+    <button class="tab activo" data-tab="clientes" onclick="irA('clientes')">👥 Clientes</button>
+    <button class="tab" data-tab="premios" onclick="irA('premios')">🎁 Premios</button>
+    <button class="tab" data-tab="config" onclick="irA('config')">⚙️ Configuración</button>
+  </nav>
+  <main>
+
+    <div id="mod-clientes" class="modulo activo">
+      <div class="sgrid">
+        <div class="scard"><div class="snum" id="sc-clientes">—</div><div class="slbl">Clientes cargados</div></div>
+        <div class="scard ti"><div class="snum" id="sc-puntos">—</div><div class="slbl">Puntos vigentes (todos)</div></div>
+      </div>
+      <div class="panel">
+        <div class="brow">
+          <div class="bus">🔎<input id="cli-buscar" placeholder="Buscar por nombre, email o teléfono..." oninput="renderClientes()"></div>
+          <button class="btn bv" onclick="abrirNuevoCliente()">+ Nuevo cliente</button>
+        </div>
+        <div class="twrap"><table>
+          <thead><tr><th>Nombre</th><th>Contacto</th><th>Puntos</th><th>Acciones</th></tr></thead>
+          <tbody id="tb-clientes"></tbody>
+        </table></div>
+        <div id="cli-vacio" class="vacio" style="display:none">Todavía no cargaste ningún cliente. Usá "+ Nuevo cliente" para empezar.</div>
+      </div>
+    </div>
+
+    <div id="mod-premios" class="modulo">
+      <div class="panel">
+        <div class="brow"><div class="ptit" style="margin:0">🎁 Premios canjeables</div><button class="btn bv" onclick="abrirNuevoPremio()">+ Nuevo premio</button></div>
+        <div class="twrap"><table>
+          <thead><tr><th>Premio</th><th>Costo en puntos</th><th>Acciones</th></tr></thead>
+          <tbody id="tb-premios"></tbody>
+        </table></div>
+        <div id="premios-vacio" class="vacio" style="display:none">Todavía no cargaste premios. Los clientes no van a poder canjear hasta que agregues al menos uno.</div>
+      </div>
+    </div>
+
+    <div id="mod-config" class="modulo">
+      <div class="panel">
+        <div class="ptit">⚙️ Regla de puntos</div>
+        <div class="fgrid">
+          <div class="fg"><label>Cada esta cantidad de compra ($)</label><input type="number" id="cfg-monto" min="1" step="0.01" oninput="cfgPreview()"></div>
+          <div class="fg"><label>...suma esta cantidad de puntos</label><input type="number" id="cfg-puntos" min="0.01" step="0.01" oninput="cfgPreview()"></div>
+          <div class="fg"><label>Valor de referencia del punto ($)</label><input type="number" id="cfg-valorpunto" min="0" step="0.01"></div>
+          <div class="fg"><label>Estado</label><select id="cfg-activo"><option value="si">Activo</option><option value="no">Inactivo</option></select></div>
+        </div>
+        <div id="cfg-ejemplo" style="font-size:12px;color:#888;margin-bottom:14px"></div>
+        <button class="btn bv" onclick="guardarConfig()">💾 Guardar</button>
+        <span id="cfg-estado" style="font-size:12px;color:var(--verde);margin-left:10px"></span>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal: nuevo cliente -->
+<div class="modal-bg" id="m-cliente">
+  <div class="modal">
+    <div class="mhead">👥 Nuevo cliente</div>
+    <div class="mbody">
+      <div class="fg"><label>Nombre</label><input id="ncli-nombre"></div>
+      <div class="fg"><label>Email (opcional)</label><input id="ncli-email"></div>
+      <div class="fg"><label>Teléfono (opcional)</label><input id="ncli-tel"></div>
+    </div>
+    <div class="mfoot"><button class="btn bg" onclick="cerrar('m-cliente')">Cancelar</button><button class="btn bv" onclick="guardarNuevoCliente()">💾 Guardar</button></div>
+  </div>
+</div>
+
+<!-- Modal: sumar puntos por compra -->
+<div class="modal-bg" id="m-sumar">
+  <div class="modal">
+    <div class="mhead">➕ Sumar puntos</div>
+    <div class="mbody">
+      <div id="sumar-cliente-info" style="font-size:13px"></div>
+      <div class="fg"><label>Monto de la compra ($)</label><input type="number" id="sumar-monto" min="0" step="0.01" oninput="sumarPreview()"></div>
+      <div id="sumar-preview" style="font-size:13px;color:var(--verde);font-weight:600"></div>
+    </div>
+    <div class="mfoot"><button class="btn bg" onclick="cerrar('m-sumar')">Cancelar</button><button class="btn bv" onclick="confirmarSumar()">💾 Confirmar</button></div>
+  </div>
+</div>
+
+<!-- Modal: ajuste manual -->
+<div class="modal-bg" id="m-ajuste">
+  <div class="modal">
+    <div class="mhead">✏️ Ajustar puntos</div>
+    <div class="mbody">
+      <div id="ajuste-cliente-info" style="font-size:13px"></div>
+      <div class="fg"><label>Cantidad (usá negativo para restar, ej: -5)</label><input type="number" id="ajuste-cantidad" step="0.01"></div>
+      <div class="fg"><label>Motivo</label><input id="ajuste-motivo" placeholder="Ej: corrección, promoción especial..."></div>
+    </div>
+    <div class="mfoot"><button class="btn bg" onclick="cerrar('m-ajuste')">Cancelar</button><button class="btn bv" onclick="confirmarAjuste()">💾 Guardar</button></div>
+  </div>
+</div>
+
+<!-- Modal: canjear premio -->
+<div class="modal-bg" id="m-canje">
+  <div class="modal">
+    <div class="mhead">🎁 Canjear premio</div>
+    <div class="mbody">
+      <div id="canje-cliente-info" style="font-size:13px"></div>
+      <div class="fg"><label>Premio</label><select id="canje-premio" onchange="canjePreview()"></select></div>
+      <div id="canje-preview" style="font-size:13px;font-weight:600"></div>
+    </div>
+    <div class="mfoot"><button class="btn bg" onclick="cerrar('m-canje')">Cancelar</button><button class="btn bv" onclick="confirmarCanje()">✅ Canjear</button></div>
+  </div>
+</div>
+
+<!-- Modal: historial -->
+<div class="modal-bg" id="m-historial">
+  <div class="modal">
+    <div class="mhead">📜 Historial</div>
+    <div class="mbody"><div class="hist" id="hist-lista"></div></div>
+    <div class="mfoot"><button class="btn bg" onclick="cerrar('m-historial')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- Modal: nuevo/editar premio -->
+<div class="modal-bg" id="m-premio">
+  <div class="modal">
+    <div class="mhead" id="premio-titulo">🎁 Nuevo premio</div>
+    <div class="mbody">
+      <div class="fg"><label>Nombre del premio</label><input id="premio-nombre"></div>
+      <div class="fg"><label>Costo en puntos</label><input type="number" id="premio-costopts" min="0" step="0.01"></div>
+    </div>
+    <div class="mfoot"><button class="btn bg" onclick="cerrar('m-premio')">Cancelar</button><button class="btn bv" onclick="guardarPremio()">💾 Guardar</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════ CONFIG SUPABASE (misma base que Mi Gestor) ═══════════════════════
+const SB_URL = "https://yabschiaphpiozajnwxx.supabase.co";
+const SB_KEY = "sb_publishable_BZlDsQFy_PFTx-01ZYt7rg_FN4IqLB5";
+
+let NEGOCIO_ID = null;
+let SESSION_TOKEN = null;
+let _sesionUsr = null;
+function authToken(){ return SESSION_TOKEN || SB_KEY; }
+
+async function sbGet(table, params=''){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, { headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${authToken()}` } });
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbPost(table, body){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, { method:'POST', headers:{ 'apikey':SB_KEY,'Authorization':`Bearer ${authToken()}`,'Content-Type':'application/json','Prefer':'return=representation' }, body:JSON.stringify(body) });
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbPatch(table, id, body){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, { method:'PATCH', headers:{ 'apikey':SB_KEY,'Authorization':`Bearer ${authToken()}`,'Content-Type':'application/json','Prefer':'return=representation' }, body:JSON.stringify(body) });
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// Avisa por mail al cliente (suma o canje). Nunca debe romper el flujo principal:
+// si el mail falla (o todavía no está configurado el proveedor), se ignora en silencio.
+const MAIL_URL = `${SB_URL}/functions/v1/fidelizacion-mail`;
+async function notificarMail(tipo, cliente, puntos, premioNombre){
+  try{
+    await fetch(MAIL_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ negocio_id:NEGOCIO_ID, cliente_id:cliente.id, tipo, puntos, premio_nombre:premioNombre||null })
+    });
+  }catch(e){ console.warn('No se pudo avisar por mail (no interrumpe el flujo):', e); }
+}
+
+function toast(msg, tipo){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast mostrar'+(tipo?(' '+tipo):'');
+  setTimeout(()=>{ t.className='toast'; }, 2600);
+}
+function fmt(n){ return '$'+Number(n||0).toLocaleString('es-AR'); }
+function cerrar(id){ document.getElementById(id).classList.remove('activo'); }
+function abrir(id){ document.getElementById(id).classList.add('activo'); }
+
+// ═══════════════════════ LOGIN ═══════════════════════
+function _tokenExpMs(token){
+  try{ const p = JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); return p.exp ? p.exp*1000 : 0; }catch(e){ return 0; }
+}
+
+async function doLogin(){
+  const usr = document.getElementById('login-usr').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-err');
+  err.style.display = 'none';
+  if(!usr || !pass){ err.textContent='Completá usuario y contraseña'; err.style.display='block'; return; }
+  try{
+    const resp = await fetch(`${SB_URL}/functions/v1/login`, { method:'POST', headers:{'apikey':SB_KEY,'Content-Type':'application/json'}, body:JSON.stringify({ username:usr, password:pass }) });
+    const data = await resp.json();
+    if(!resp.ok || !data.token){ err.textContent='Usuario o contraseña incorrectos'; err.style.display='block'; return; }
+    SESSION_TOKEN = data.token;
+    NEGOCIO_ID = data.usuario.negocio_id;
+    _sesionUsr = data.usuario;
+    localStorage.setItem('fid_token', SESSION_TOKEN);
+    localStorage.setItem('fid_tokenExp', String(_tokenExpMs(SESSION_TOKEN)));
+    localStorage.setItem('fid_negocioId', NEGOCIO_ID);
+    await entrarApp();
+  }catch(e){
+    console.error(e);
+    err.textContent = 'No se pudo conectar. Revisá tu internet.'; err.style.display='block';
+  }
+}
+
+function doLogout(){
+  SESSION_TOKEN = null; NEGOCIO_ID = null; _sesionUsr = null;
+  localStorage.removeItem('fid_token'); localStorage.removeItem('fid_tokenExp'); localStorage.removeItem('fid_negocioId');
+  document.getElementById('app-wrap').style.display = 'none';
+  document.getElementById('login-wrap').style.display = 'flex';
+  document.getElementById('login-usr').value=''; document.getElementById('login-pass').value='';
+}
+
+async function entrarApp(){
+  document.getElementById('login-wrap').style.display = 'none';
+  document.getElementById('app-wrap').style.display = 'block';
+  document.getElementById('hdr-usr').textContent = _sesionUsr ? _sesionUsr.nombre || _sesionUsr.username || '' : '';
+  try{
+    const neg = await sbGet('negocios', `id=eq.${NEGOCIO_ID}`);
+    document.getElementById('hdr-negocio').textContent = (neg[0] && neg[0].nombre) || '';
+  }catch(e){}
+  await Promise.all([cargarClientes(), cargarPremios(), cargarConfig()]);
+  renderClientes();
+}
+
+(async function initSesion(){
+  const tok = localStorage.getItem('fid_token');
+  const exp = Number(localStorage.getItem('fid_tokenExp')||0);
+  const neg = localStorage.getItem('fid_negocioId');
+  if(tok && neg && Date.now() < exp){
+    SESSION_TOKEN = tok; NEGOCIO_ID = neg;
+    try{ await entrarApp(); }catch(e){ doLogout(); }
+  }
+})();
+
+// ═══════════════════════ NAVEGACIÓN ═══════════════════════
+function irA(tab){
+  document.querySelectorAll('.modulo').forEach(m=>m.classList.remove('activo'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('activo'));
+  document.getElementById('mod-'+tab).classList.add('activo');
+  document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('activo');
+}
+
+// ═══════════════════════ CLIENTES ═══════════════════════
+let _clientes = [];
+let _cliSel = null;
+
+async function cargarClientes(){
+  try{ _clientes = await sbGet('fidelizacion_clientes', `negocio_id=eq.${NEGOCIO_ID}&order=nombre.asc`); }
+  catch(e){ console.error(e); toast('No se pudieron cargar los clientes','r'); }
+}
+
+function renderClientes(){
+  const q = (document.getElementById('cli-buscar').value||'').toLowerCase();
+  const filtrados = _clientes.filter(c => !q || (c.nombre||'').toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q) || (c.telefono||'').includes(q));
+  document.getElementById('sc-clientes').textContent = _clientes.length;
+  document.getElementById('sc-puntos').textContent = _clientes.reduce((s,c)=>s+(Number(c.puntos)||0),0);
+  const tb = document.getElementById('tb-clientes');
+  document.getElementById('cli-vacio').style.display = _clientes.length ? 'none' : 'block';
+  tb.innerHTML = filtrados.map(c => `
+    <tr>
+      <td><strong>${escHtml(c.nombre)}</strong></td>
+      <td style="font-size:12px;color:#666">${escHtml(c.email||c.telefono||'—')}</td>
+      <td><span class="bdg tierra">🎁 ${c.puntos||0}</span></td>
+      <td>
+        <button class="btn bv bsm" onclick="abrirSumar('${c.id}')">+ Puntos</button>
+        <button class="btn bt bsm" onclick="abrirCanje('${c.id}')">Canjear</button>
+        <button class="btn bg bsm" onclick="abrirAjuste('${c.id}')">Ajustar</button>
+        <button class="btn bg bsm" onclick="abrirHistorial('${c.id}')">Historial</button>
+      </td>
+    </tr>`).join('');
+}
+
+function escHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+function abrirNuevoCliente(){
+  document.getElementById('ncli-nombre').value='';
+  document.getElementById('ncli-email').value='';
+  document.getElementById('ncli-tel').value='';
+  abrir('m-cliente');
+}
+async function guardarNuevoCliente(){
+  const nombre = document.getElementById('ncli-nombre').value.trim();
+  const email = document.getElementById('ncli-email').value.trim();
+  const tel = document.getElementById('ncli-tel').value.trim();
+  if(!nombre){ toast('Ingresá el nombre del cliente','a'); return; }
+  try{
+    const res = await sbPost('fidelizacion_clientes', { negocio_id:NEGOCIO_ID, nombre, email:email||null, telefono:tel||null, puntos:0 });
+    if(res && res[0]) _clientes.unshift(res[0]);
+    cerrar('m-cliente'); renderClientes();
+    toast('Cliente agregado ✓');
+  }catch(e){ console.error(e); toast('No se pudo guardar (¿email repetido?)','r'); }
+}
+
+// ═══════════════════════ CONFIG (regla de puntos) ═══════════════════════
+let _config = null;
+async function cargarConfig(){
+  try{
+    const rows = await sbGet('fidelizacion_config', `negocio_id=eq.${NEGOCIO_ID}&limit=1`);
+    _config = rows && rows.length ? rows[0] : null;
+  }catch(e){ console.error(e); }
+  document.getElementById('cfg-monto').value = _config ? _config.monto_por_punto : 100;
+  document.getElementById('cfg-puntos').value = _config ? _config.puntos_otorgados : 1;
+  document.getElementById('cfg-valorpunto').value = _config ? _config.valor_punto : 1;
+  document.getElementById('cfg-activo').value = (_config ? _config.activo : true) ? 'si' : 'no';
+  cfgPreview();
+}
+function cfgPreview(){
+  const m = parseFloat(document.getElementById('cfg-monto').value)||0;
+  const p = parseFloat(document.getElementById('cfg-puntos').value)||0;
+  document.getElementById('cfg-ejemplo').textContent = (m>0&&p>0) ? `Ejemplo: una compra de ${fmt(m)} suma ${p} punto(s).` : '';
+}
+function calcularPuntos(total){
+  if(!_config || !_config.activo) return 0;
+  const monto = _config.monto_por_punto||0, otorgados = _config.puntos_otorgados||0;
+  if(monto<=0||otorgados<=0) return 0;
+  return Math.floor((total||0)/monto) * otorgados;
+}
+async function guardarConfig(){
+  const monto = parseFloat(document.getElementById('cfg-monto').value)||0;
+  const puntos = parseFloat(document.getElementById('cfg-puntos').value)||0;
+  const valorPunto = parseFloat(document.getElementById('cfg-valorpunto').value)||0;
+  const activo = document.getElementById('cfg-activo').value === 'si';
+  if(monto<=0||puntos<=0){ toast('Completá el monto y los puntos','a'); return; }
+  const body = { negocio_id:NEGOCIO_ID, monto_por_punto:monto, puntos_otorgados:puntos, valor_punto:valorPunto, activo, updated_at:new Date().toISOString() };
+  const estado = document.getElementById('cfg-estado');
+  estado.textContent = 'Guardando...';
+  try{
+    if(_config && _config.id){ const r = await sbPatch('fidelizacion_config', _config.id, body); if(r&&r[0]) _config=r[0]; }
+    else { const r = await sbPost('fidelizacion_config', body); if(r&&r[0]) _config=r[0]; }
+    estado.textContent = 'Guardado ✓'; setTimeout(()=>estado.textContent='',2200);
+  }catch(e){ console.error(e); estado.textContent=''; toast('Error al guardar','r'); }
+}
+
+// ═══════════════════════ PREMIOS ═══════════════════════
+let _premios = [];
+async function cargarPremios(){
+  try{ _premios = await sbGet('fidelizacion_premios', `negocio_id=eq.${NEGOCIO_ID}&activo=eq.true&order=created_at.desc`); }
+  catch(e){ console.error(e); }
+  renderPremios();
+}
+function renderPremios(){
+  const tb = document.getElementById('tb-premios');
+  document.getElementById('premios-vacio').style.display = _premios.length ? 'none' : 'block';
+  tb.innerHTML = _premios.map(p => `
+    <tr><td><strong>${escHtml(p.nombre)}</strong></td><td>${p.costo_puntos} pts</td>
+    <td><button class="btn bg bsm" onclick="editarPremio('${p.id}')">Editar</button>
+        <button class="btn br bsm" onclick="borrarPremio('${p.id}')">Desactivar</button></td></tr>`).join('');
+}
+let _premioEditId = null;
+function abrirNuevoPremio(){
+  _premioEditId = null;
+  document.getElementById('premio-titulo').textContent = '🎁 Nuevo premio';
+  document.getElementById('premio-nombre').value=''; document.getElementById('premio-costopts').value='';
+  abrir('m-premio');
+}
+function editarPremio(id){
+  const p = _premios.find(x=>x.id===id); if(!p) return;
+  _premioEditId = id;
+  document.getElementById('premio-titulo').textContent = '🎁 Editar premio';
+  document.getElementById('premio-nombre').value = p.nombre;
+  document.getElementById('premio-costopts').value = p.costo_puntos;
+  abrir('m-premio');
+}
+async function guardarPremio(){
+  const nombre = document.getElementById('premio-nombre').value.trim();
+  const costo = parseFloat(document.getElementById('premio-costopts').value);
+  if(!nombre || !(costo>=0)){ toast('Completá nombre y costo en puntos','a'); return; }
+  try{
+    if(_premioEditId){ await sbPatch('fidelizacion_premios', _premioEditId, { nombre, costo_puntos:costo }); }
+    else{ await sbPost('fidelizacion_premios', { negocio_id:NEGOCIO_ID, nombre, costo_puntos:costo, activo:true, created_at:new Date().toISOString() }); }
+    cerrar('m-premio'); await cargarPremios();
+    toast('Premio guardado ✓');
+  }catch(e){ console.error(e); toast('No se pudo guardar el premio','r'); }
+}
+async function borrarPremio(id){
+  if(!confirm('¿Desactivar este premio? Ya no va a aparecer para canjear.')) return;
+  try{ await sbPatch('fidelizacion_premios', id, { activo:false }); await cargarPremios(); toast('Premio desactivado'); }
+  catch(e){ console.error(e); toast('No se pudo desactivar','r'); }
+}
+
+// ═══════════════════════ SUMAR PUNTOS ═══════════════════════
+function abrirSumar(cliId){
+  _cliSel = _clientes.find(c=>c.id===cliId); if(!_cliSel) return;
+  document.getElementById('sumar-cliente-info').textContent = `${_cliSel.nombre} — tiene ${_cliSel.puntos||0} pts`;
+  document.getElementById('sumar-monto').value = '';
+  document.getElementById('sumar-preview').textContent = '';
+  abrir('m-sumar');
+}
+function sumarPreview(){
+  const monto = parseFloat(document.getElementById('sumar-monto').value)||0;
+  const pts = calcularPuntos(monto);
+  document.getElementById('sumar-preview').textContent = monto>0 ? `Suma ${pts} punto(s)` : '';
+}
+async function confirmarSumar(){
+  const monto = parseFloat(document.getElementById('sumar-monto').value)||0;
+  const pts = calcularPuntos(monto);
+  if(monto<=0){ toast('Ingresá el monto de la compra','a'); return; }
+  if(pts<=0){ toast('La regla de puntos no está activa o el monto es muy bajo','a'); return; }
+  try{
+    const nuevoPuntos = (_cliSel.puntos||0) + pts;
+    await sbPatch('fidelizacion_clientes', _cliSel.id, { puntos:nuevoPuntos, updated_at:new Date().toISOString() });
+    await sbPost('fidelizacion_movimientos', { negocio_id:NEGOCIO_ID, cliente_id:_cliSel.id, origen_cliente:'standalone', tipo:'suma', puntos:pts, created_at:new Date().toISOString() });
+    _cliSel.puntos = nuevoPuntos;
+    cerrar('m-sumar'); renderClientes();
+    toast(`✓ Se sumaron ${pts} puntos a ${_cliSel.nombre}`);
+    notificarMail('suma', _cliSel, pts);
+  }catch(e){ console.error(e); toast('No se pudo guardar (revisá conexión)','r'); }
+}
+
+// ═══════════════════════ AJUSTE MANUAL ═══════════════════════
+function abrirAjuste(cliId){
+  _cliSel = _clientes.find(c=>c.id===cliId); if(!_cliSel) return;
+  document.getElementById('ajuste-cliente-info').textContent = `${_cliSel.nombre} — tiene actualmente ${_cliSel.puntos||0} pts`;
+  document.getElementById('ajuste-cantidad').value = '';
+  document.getElementById('ajuste-motivo').value = '';
+  abrir('m-ajuste');
+}
+async function confirmarAjuste(){
+  const cant = parseFloat(document.getElementById('ajuste-cantidad').value);
+  const motivo = document.getElementById('ajuste-motivo').value.trim();
+  if(!cant){ toast('Ingresá una cantidad distinta de cero','a'); return; }
+  try{
+    const nuevoPuntos = Math.max(0, (_cliSel.puntos||0) + cant);
+    await sbPatch('fidelizacion_clientes', _cliSel.id, { puntos:nuevoPuntos, updated_at:new Date().toISOString() });
+    await sbPost('fidelizacion_movimientos', { negocio_id:NEGOCIO_ID, cliente_id:_cliSel.id, origen_cliente:'standalone', tipo:'ajuste', puntos:cant, nota:motivo||null, created_at:new Date().toISOString() });
+    _cliSel.puntos = nuevoPuntos;
+    cerrar('m-ajuste'); renderClientes();
+    toast(`✓ ${_cliSel.nombre} ahora tiene ${nuevoPuntos} puntos`);
+  }catch(e){ console.error(e); toast('No se pudo guardar el ajuste','r'); }
+}
+
+// ═══════════════════════ CANJE ═══════════════════════
+function abrirCanje(cliId){
+  _cliSel = _clientes.find(c=>c.id===cliId); if(!_cliSel) return;
+  if(!_premios.length){ toast('Todavía no cargaste premios','a'); return; }
+  document.getElementById('canje-cliente-info').textContent = `${_cliSel.nombre} — tiene ${_cliSel.puntos||0} pts`;
+  const sel = document.getElementById('canje-premio');
+  sel.innerHTML = _premios.map(p => `<option value="${p.id}">${escHtml(p.nombre)} (${p.costo_puntos} pts)</option>`).join('');
+  canjePreview();
+  abrir('m-canje');
+}
+function canjePreview(){
+  const p = _premios.find(x=>x.id===document.getElementById('canje-premio').value);
+  const el = document.getElementById('canje-preview');
+  if(!p){ el.textContent=''; return; }
+  const saldo = (_cliSel.puntos||0) - p.costo_puntos;
+  if(saldo<0){ el.style.color='var(--rojo)'; el.textContent = `❌ Puntos insuficientes (le faltan ${-saldo})`; }
+  else{ el.style.color='var(--verde)'; el.textContent = `✓ Le quedarían ${saldo} puntos después del canje`; }
+}
+async function confirmarCanje(){
+  const p = _premios.find(x=>x.id===document.getElementById('canje-premio').value);
+  if(!p){ toast('Elegí un premio','a'); return; }
+  if((_cliSel.puntos||0) < p.costo_puntos){ toast('El cliente no tiene puntos suficientes','r'); return; }
+  try{
+    const nuevoPuntos = (_cliSel.puntos||0) - p.costo_puntos;
+    await sbPatch('fidelizacion_clientes', _cliSel.id, { puntos:nuevoPuntos, updated_at:new Date().toISOString() });
+    await sbPost('fidelizacion_movimientos', { negocio_id:NEGOCIO_ID, cliente_id:_cliSel.id, origen_cliente:'standalone', tipo:'canje', puntos:-p.costo_puntos, premio_id:p.id, nota:p.nombre, created_at:new Date().toISOString() });
+    _cliSel.puntos = nuevoPuntos;
+    cerrar('m-canje'); renderClientes();
+    toast(`✓ Canjeado: ${p.nombre}`);
+    notificarMail('canje', _cliSel, p.costo_puntos, p.nombre);
+  }catch(e){ console.error(e); toast('No se pudo procesar el canje','r'); }
+}
+
+// ═══════════════════════ HISTORIAL ═══════════════════════
+async function abrirHistorial(cliId){
+  _cliSel = _clientes.find(c=>c.id===cliId); if(!_cliSel) return;
+  const cont = document.getElementById('hist-lista');
+  cont.innerHTML = 'Cargando...';
+  abrir('m-historial');
+  try{
+    const movs = await sbGet('fidelizacion_movimientos', `cliente_id=eq.${_cliSel.id}&origen_cliente=eq.standalone&order=created_at.desc&limit=50`);
+    if(!movs.length){ cont.innerHTML = '<div class="vacio">Sin movimientos todavía.</div>'; return; }
+    const etiquetas = { suma:'➕ Suma', ajuste:'✏️ Ajuste', canje:'🎁 Canje' };
+    cont.innerHTML = movs.map(m => `
+      <div class="hitem">
+        <div>${etiquetas[m.tipo]||m.tipo}${m.nota?(' — '+escHtml(m.nota)):''}<div class="htp">${new Date(m.created_at).toLocaleString('es-AR')}</div></div>
+        <div style="font-weight:700;color:${m.puntos<0?'var(--rojo)':'var(--verde)'}">${m.puntos>0?'+':''}${m.puntos}</div>
+      </div>`).join('');
+  }catch(e){ console.error(e); cont.innerHTML = '<div class="vacio">No se pudo cargar el historial.</div>'; }
+}
+</script>
+</body>
+</html>
