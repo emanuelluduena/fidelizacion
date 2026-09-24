@@ -297,6 +297,11 @@ async function sbPatch(table, id, body){
   return r.json();
 }
 
+async function sbDelete(table, id){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, { method:'DELETE', headers:{ 'apikey':SB_KEY,'Authorization':`Bearer ${authToken()}` } });
+  if(!r.ok) throw new Error(await r.text());
+}
+
 // Avisa por mail al cliente (suma o canje). Nunca debe romper el flujo principal:
 // si el mail falla (o todavía no está configurado el proveedor), se ignora en silencio.
 const MAIL_URL = `${SB_URL}/functions/v1/fidelizacion-mail`;
@@ -409,6 +414,7 @@ function renderClientes(){
         <button class="btn bt bsm" onclick="abrirCanje('${c.id}')">Canjear</button>
         <button class="btn bg bsm" onclick="abrirAjuste('${c.id}')">Ajustar</button>
         <button class="btn bg bsm" onclick="abrirHistorial('${c.id}')">Historial</button>
+        <button class="btn br bsm" onclick="eliminarCliente('${c.id}')">Eliminar</button>
       </td>
     </tr>`).join('');
 }
@@ -434,6 +440,18 @@ async function guardarNuevoCliente(){
   }catch(e){ console.error(e); toast('No se pudo guardar (¿email repetido?)','r'); }
 }
 
+async function eliminarCliente(id){
+  const c = _clientes.find(x => x.id === id);
+  if(!c) return;
+  if(!confirm(`¿Seguro que querés eliminar a ${c.nombre}? Se borra también su historial de puntos. No se puede deshacer.`)) return;
+  try{
+    await sbDelete('fidelizacion_movimientos', `cliente_id=eq.${id}&origen_cliente=eq.standalone`);
+    await sbDelete('fidelizacion_clientes', id);
+    _clientes = _clientes.filter(x => x.id !== id);
+    renderClientes();
+    toast(`Cliente ${c.nombre} eliminado`);
+  }catch(e){ console.error(e); toast('No se pudo eliminar el cliente','r'); }
+}
 // ═══════════════════════ PROMOCIÓN (mail masivo) ═══════════════════════
 const CAMPANA_URL = `${SB_URL}/functions/v1/fidelizacion-campana`;
 function minPuntosParaCanjear(){
