@@ -153,7 +153,7 @@ tbody td{padding:9px 13px;vertical-align:middle;}
         </div>
         <div class="fg" style="flex-direction:row;align-items:center;gap:8px;margin-bottom:14px">
           <input type="checkbox" id="promo-solopuntos" style="width:auto">
-          <label style="font-size:13px;font-weight:400">Mandar solo a clientes que ya tienen puntos acumulados</label>
+          <label style="font-size:13px;font-weight:400">Mandar solo a clientes que ya juntaron puntos suficientes para canjear algún premio</label>
         </div>
         <div id="promo-destinatarios" style="font-size:12px;color:#888;margin-bottom:14px"></div>
         <button class="btn bt" onclick="enviarPromocion()">📣 Enviar promoción</button>
@@ -436,14 +436,25 @@ async function guardarNuevoCliente(){
 
 // ═══════════════════════ PROMOCIÓN (mail masivo) ═══════════════════════
 const CAMPANA_URL = `${SB_URL}/functions/v1/fidelizacion-campana`;
+function minPuntosParaCanjear(){
+  // El costo del premio más barato entre los activos. Si no hay premios cargados, no se puede filtrar por esto.
+  if(!_premios.length) return null;
+  return Math.min(..._premios.map(p => Number(p.costo_puntos)||0));
+}
 function promoDestinatarios(){
   const soloPuntos = document.getElementById('promo-solopuntos').checked;
-  return _clientes.filter(c => c.email && (!soloPuntos || (c.puntos||0) > 0));
+  const minimo = minPuntosParaCanjear();
+  return _clientes.filter(c => c.email && (!soloPuntos || (minimo != null && (c.puntos||0) >= minimo)));
 }
 function actualizarPromoDestinatarios(){
   const n = promoDestinatarios().length;
   const el = document.getElementById('promo-destinatarios');
-  el.textContent = n ? `Le va a llegar a ${n} cliente(s) con email cargado.` : 'Ningún cliente cumple este filtro (o no tienen email cargado todavía).';
+  const soloPuntos = document.getElementById('promo-solopuntos').checked;
+  if(soloPuntos && !_premios.length){
+    el.textContent = 'No podés usar este filtro todavía: cargá al menos un premio en la pestaña "Premios" primero.';
+  }else{
+    el.textContent = n ? `Le va a llegar a ${n} cliente(s) con email cargado.` : 'Ningún cliente cumple este filtro (o no tienen email cargado todavía).';
+  }
 }
 document.getElementById('promo-solopuntos').addEventListener('change', actualizarPromoDestinatarios);
 
@@ -451,8 +462,10 @@ async function enviarPromocion(){
   const asunto = document.getElementById('promo-asunto').value.trim();
   const mensaje = document.getElementById('promo-mensaje').value.trim();
   const soloPuntos = document.getElementById('promo-solopuntos').checked;
+  const minimo = soloPuntos ? minPuntosParaCanjear() : null;
   const destinatarios = promoDestinatarios().length;
   if(!asunto || !mensaje){ toast('Completá el asunto y el mensaje','a'); return; }
+  if(soloPuntos && minimo == null){ toast('Cargá al menos un premio para poder usar este filtro','a'); return; }
   if(!destinatarios){ toast('No hay clientes que reciban este mail','a'); return; }
   if(!confirm(`¿Confirmás mandar este mail a ${destinatarios} cliente(s)? No se puede deshacer.`)) return;
 
@@ -461,7 +474,7 @@ async function enviarPromocion(){
   try{
     const resp = await fetch(CAMPANA_URL, {
       method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ negocio_id:NEGOCIO_ID, asunto, mensaje, solo_con_puntos:soloPuntos })
+      body: JSON.stringify({ negocio_id:NEGOCIO_ID, asunto, mensaje, min_puntos:minimo })
     });
     const data = await resp.json();
     if(!resp.ok || !data.ok){
