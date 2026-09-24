@@ -302,6 +302,11 @@ async function sbDelete(table, id){
   if(!r.ok) throw new Error(await r.text());
 }
 
+async function sbDeleteWhere(table, filtro){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${filtro}`, { method:'DELETE', headers:{ 'apikey':SB_KEY,'Authorization':`Bearer ${authToken()}` } });
+  if(!r.ok) throw new Error(await r.text());
+}
+
 // Avisa por mail al cliente (suma o canje). Nunca debe romper el flujo principal:
 // si el mail falla (o todavía no está configurado el proveedor), se ignora en silencio.
 const MAIL_URL = `${SB_URL}/functions/v1/fidelizacion-mail`;
@@ -343,14 +348,21 @@ async function doLogin(){
     NEGOCIO_ID = data.usuario.negocio_id;
     _sesionUsr = data.usuario;
 
-    // Si es una cuenta de demo con fecha límite ya vencida, no la dejamos entrar
-    const negChequeo = await sbGet('negocios', `id=eq.${NEGOCIO_ID}&select=demo_expira`);
-    const expira = negChequeo?.[0]?.demo_expira;
-    if(expira && new Date(expira) < new Date()){
-      SESSION_TOKEN = null;
-      err.textContent = 'Esta demo venció. Contactanos para seguir probándola.';
-      err.style.display = 'block';
-      return;
+      // Si es una cuenta de demo: arranca a contar 2 días desde el primer login.
+    const negChequeo = await sbGet('negocios', `id=eq.${NEGOCIO_ID}&select=es_demo,demo_primer_uso`);
+    const info = negChequeo?.[0];
+    if(info?.es_demo){
+      if(!info.demo_primer_uso){
+        await sbPatch('negocios', NEGOCIO_ID, { demo_primer_uso: new Date().toISOString() });
+      } else {
+        const vence = new Date(new Date(info.demo_primer_uso).getTime() + 2*24*60*60*1000);
+        if(new Date() > vence){
+          SESSION_TOKEN = null;
+          err.textContent = 'Esta demo venció. Contactanos para seguir probándola.';
+          err.style.display = 'block';
+          return;
+        }
+      }
     }
 
     localStorage.setItem('fid_token', SESSION_TOKEN);
@@ -456,7 +468,7 @@ async function eliminarCliente(id){
   if(!c) return;
   if(!confirm(`¿Seguro que querés eliminar a ${c.nombre}? Se borra también su historial de puntos. No se puede deshacer.`)) return;
   try{
-    await sbDelete('fidelizacion_movimientos', `cliente_id=eq.${id}&origen_cliente=eq.standalone`);
+    await sbDeleteWhere('fidelizacion_movimientos', `cliente_id=eq.${id}&origen_cliente=eq.standalone`);
     await sbDelete('fidelizacion_clientes', id);
     _clientes = _clientes.filter(x => x.id !== id);
     renderClientes();
