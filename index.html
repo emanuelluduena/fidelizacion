@@ -342,6 +342,17 @@ async function doLogin(){
     SESSION_TOKEN = data.token;
     NEGOCIO_ID = data.usuario.negocio_id;
     _sesionUsr = data.usuario;
+
+    // Si es una cuenta de demo con fecha límite ya vencida, no la dejamos entrar
+    const negChequeo = await sbGet('negocios', `id=eq.${NEGOCIO_ID}&select=demo_expira`);
+    const expira = negChequeo?.[0]?.demo_expira;
+    if(expira && new Date(expira) < new Date()){
+      SESSION_TOKEN = null;
+      err.textContent = 'Esta demo venció. Contactanos para seguir probándola.';
+      err.style.display = 'block';
+      return;
+    }
+
     localStorage.setItem('fid_token', SESSION_TOKEN);
     localStorage.setItem('fid_tokenExp', String(_tokenExpMs(SESSION_TOKEN)));
     localStorage.setItem('fid_negocioId', NEGOCIO_ID);
