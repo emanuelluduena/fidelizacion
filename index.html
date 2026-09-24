@@ -98,6 +98,7 @@ tbody td{padding:9px 13px;vertical-align:middle;}
     <button class="tab activo" data-tab="clientes" onclick="irA('clientes')">👥 Clientes</button>
     <button class="tab" data-tab="premios" onclick="irA('premios')">🎁 Premios</button>
     <button class="tab" data-tab="config" onclick="irA('config')">⚙️ Configuración</button>
+    <button class="tab" data-tab="negocio" onclick="irA('negocio')">🏢 Mi negocio</button>
   </nav>
   <main>
 
@@ -142,6 +143,22 @@ tbody td{padding:9px 13px;vertical-align:middle;}
         <div id="cfg-ejemplo" style="font-size:12px;color:#888;margin-bottom:14px"></div>
         <button class="btn bv" onclick="guardarConfig()">💾 Guardar</button>
         <span id="cfg-estado" style="font-size:12px;color:var(--verde);margin-left:10px"></span>
+      </div>
+    </div>
+
+    <div id="mod-negocio" class="modulo">
+      <div class="panel">
+        <div class="ptit">🏢 Datos de tu negocio</div>
+        <div style="font-size:12px;color:#888;margin-bottom:14px">Estos datos son solo para identificar tu cuenta — no los ve ningún cliente.</div>
+        <div class="fgrid">
+          <div class="fg"><label>Nombre del negocio</label><input id="neg-nombre" placeholder="Ej: Almacén Don José"></div>
+          <div class="fg"><label>Nombre de contacto</label><input id="neg-contacto" placeholder="Ej: José Pérez"></div>
+          <div class="fg"><label>Teléfono</label><input id="neg-telefono" placeholder="Ej: 351 123 4567"></div>
+          <div class="fg"><label>Email</label><input id="neg-email" placeholder="Ej: contacto@negocio.com"></div>
+          <div class="fg"><label>Dirección</label><input id="neg-direccion" placeholder="Ej: San Martín 123, Villa Carlos Paz"></div>
+        </div>
+        <button class="btn bv" onclick="guardarNegocio()">💾 Guardar</button>
+        <span id="neg-estado" style="font-size:12px;color:var(--verde);margin-left:10px"></span>
       </div>
     </div>
 
@@ -311,10 +328,7 @@ async function entrarApp(){
   document.getElementById('login-wrap').style.display = 'none';
   document.getElementById('app-wrap').style.display = 'block';
   document.getElementById('hdr-usr').textContent = _sesionUsr ? _sesionUsr.nombre || _sesionUsr.username || '' : '';
-  try{
-    const neg = await sbGet('negocios', `id=eq.${NEGOCIO_ID}`);
-    document.getElementById('hdr-negocio').textContent = (neg[0] && neg[0].nombre) || '';
-  }catch(e){}
+  await cargarNegocio();
   await Promise.all([cargarClientes(), cargarPremios(), cargarConfig()]);
   renderClientes();
 }
@@ -386,6 +400,40 @@ async function guardarNuevoCliente(){
     cerrar('m-cliente'); renderClientes();
     toast('Cliente agregado ✓');
   }catch(e){ console.error(e); toast('No se pudo guardar (¿email repetido?)','r'); }
+}
+
+// ═══════════════════════ MI NEGOCIO ═══════════════════════
+let _negocio = null;
+async function cargarNegocio(){
+  try{
+    const rows = await sbGet('negocios', `id=eq.${NEGOCIO_ID}`);
+    _negocio = rows && rows[0] ? rows[0] : null;
+  }catch(e){ console.error(e); }
+  document.getElementById('hdr-negocio').textContent = (_negocio && _negocio.nombre) || '';
+  document.getElementById('neg-nombre').value = (_negocio && _negocio.nombre) || '';
+  document.getElementById('neg-contacto').value = (_negocio && _negocio.contacto_nombre) || '';
+  document.getElementById('neg-telefono').value = (_negocio && _negocio.telefono) || '';
+  document.getElementById('neg-email').value = (_negocio && _negocio.email) || '';
+  document.getElementById('neg-direccion').value = (_negocio && _negocio.direccion) || '';
+}
+async function guardarNegocio(){
+  const nombre = document.getElementById('neg-nombre').value.trim();
+  if(!nombre){ toast('Ingresá el nombre del negocio','a'); return; }
+  const body = {
+    nombre,
+    contacto_nombre: document.getElementById('neg-contacto').value.trim() || null,
+    telefono: document.getElementById('neg-telefono').value.trim() || null,
+    email: document.getElementById('neg-email').value.trim() || null,
+    direccion: document.getElementById('neg-direccion').value.trim() || null,
+  };
+  const estado = document.getElementById('neg-estado');
+  estado.textContent = 'Guardando...';
+  try{
+    const res = await sbPatch('negocios', NEGOCIO_ID, body);
+    if(res && res[0]) _negocio = res[0];
+    document.getElementById('hdr-negocio').textContent = nombre;
+    estado.textContent = 'Guardado ✓'; setTimeout(()=>estado.textContent='',2200);
+  }catch(e){ console.error(e); estado.textContent=''; toast('No se pudo guardar','r'); }
 }
 
 // ═══════════════════════ CONFIG (regla de puntos) ═══════════════════════
