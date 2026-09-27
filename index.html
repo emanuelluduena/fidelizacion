@@ -398,7 +398,15 @@ async function entrarApp(){
   const neg = localStorage.getItem('fid_negocioId');
   if(tok && neg && Date.now() < exp){
     SESSION_TOKEN = tok; NEGOCIO_ID = neg;
-    try{ await entrarApp(); }catch(e){ doLogout(); }
+    try{ await entrarApp(); return; }catch(e){ doLogout(); }
+  }
+  const params = new URLSearchParams(location.search);
+  if(params.get('demo') === '1'){
+    const pool = ['fiddemo1','fiddemo2','fiddemo3','fiddemo4','fiddemo5'];
+    const elegido = pool[Math.floor(Math.random()*pool.length)];
+    document.getElementById('login-usr').value = elegido;
+    document.getElementById('login-pass').value = 'Demo1234';
+    await doLogin();
   }
 })();
 
