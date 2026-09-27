@@ -100,6 +100,7 @@ tbody td{padding:9px 13px;vertical-align:middle;}
     <button class="tab" data-tab="promo" onclick="irA('promo')">📣 Promoción</button>
     <button class="tab" data-tab="config" onclick="irA('config')">⚙️ Configuración</button>
     <button class="tab" data-tab="negocio" onclick="irA('negocio')">🏢 Mi negocio</button>
+    <button class="tab" data-tab="ayuda" onclick="irA('ayuda')">❓ Ayuda</button>
   </nav>
   <main>
 
@@ -192,6 +193,41 @@ tbody td{padding:9px 13px;vertical-align:middle;}
         </div>
         <button class="btn bv" onclick="guardarNegocio()">💾 Guardar</button>
         <span id="neg-estado" style="font-size:12px;color:var(--verde);margin-left:10px"></span>
+      </div>
+    </div>
+
+    <div id="mod-ayuda" class="modulo">
+      <div class="panel">
+        <div class="ptit">❓ Cómo usar Fidelización</div>
+        <div style="font-size:14px;line-height:1.6;color:#333">
+
+          <p style="margin-bottom:14px"><strong>1. Cargá tus clientes.</strong><br>
+          En la pestaña "👥 Clientes" tocá "+ Nuevo cliente" y guardá nombre, email y/o teléfono. No hace falta tener los dos, con uno alcanza.</p>
+
+          <p style="margin-bottom:14px"><strong>2. Configurá tu regla de puntos.</strong><br>
+          En "⚙️ Configuración" definí cada cuánto dinero de compra se suma un punto (ej: cada $1.000, 1 punto). Esto es lo que usa el sistema para calcular los puntos automáticamente.</p>
+
+          <p style="margin-bottom:14px"><strong>3. Cargá tus premios.</strong><br>
+          En "🎁 Premios" agregá los premios que tus clientes van a poder canjear (ej: "10% de descuento", "Producto gratis") y cuántos puntos cuesta cada uno.</p>
+
+          <p style="margin-bottom:14px"><strong>4. Sumá puntos en cada venta.</strong><br>
+          Buscá al cliente en "👥 Clientes" y tocá "+ Puntos". Ingresá el monto de la compra y el sistema calcula solo cuántos puntos le corresponden, según la regla que configuraste.</p>
+
+          <p style="margin-bottom:14px"><strong>5. Canjeá premios.</strong><br>
+          Cuando un cliente junta suficientes puntos, tocá "Canjear" en su fila, elegí el premio y confirmá. Los puntos se descuentan automáticamente.</p>
+
+          <p style="margin-bottom:14px"><strong>6. Ajustá manualmente si hace falta.</strong><br>
+          "Ajustar" te permite sumar o restar puntos a mano (por ejemplo, para corregir un error o dar puntos de regalo).</p>
+
+          <p style="margin-bottom:14px"><strong>7. Revisá el historial.</strong><br>
+          "Historial" te muestra todos los movimientos de puntos de ese cliente, con fecha.</p>
+
+          <p style="margin-bottom:14px"><strong>8. Mandá promociones.</strong><br>
+          En "📣 Promoción" podés escribir un mail y mandarlo a todos tus clientes con email cargado (o solo a los que ya tienen puntos para canjear). Podés personalizar el mensaje con el nombre y los puntos de cada cliente.</p>
+
+          <p style="margin-bottom:0"><strong>💡 Tip:</strong> tus clientes reciben un mail automático cada vez que suman puntos o canjean un premio — no tenés que avisarles vos.</p>
+
+        </div>
       </div>
     </div>
 
