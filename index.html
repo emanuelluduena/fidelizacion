@@ -407,9 +407,11 @@ async function entrarApp(){
     document.getElementById('login-usr').value = elegido;
     document.getElementById('login-pass').value = 'Demo1234';
     await doLogin();
+    const exito = !!SESSION_TOKEN;
+    const detalle = exito ? null : document.getElementById('login-err').textContent;
+    notificarDemoLogin(elegido, exito, detalle);
   }
 })();
-
 // ═══════════════════════ NAVEGACIÓN ═══════════════════════
 function irA(tab){
   document.querySelectorAll('.modulo').forEach(m=>m.classList.remove('activo'));
@@ -684,6 +686,16 @@ async function confirmarSumar(){
     toast(`✓ Se sumaron ${pts} puntos a ${_cliSel.nombre}`);
     notificarMail('suma', _cliSel, pts);
   }catch(e){ console.error(e); toast('No se pudo guardar (revisá conexión)','r'); }
+}
+
+async function notificarDemoLogin(usuario, exito, mensaje){
+  try{
+    await fetch(`${SB_URL}/functions/v1/demo-login-evento`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ usuario, exito, intentos:1, mensaje: mensaje || null })
+    });
+  }catch(e){ console.warn('No se pudo avisar el evento de demo (no interrumpe el flujo):', e); }
 }
 
 // ═══════════════════════ AJUSTE MANUAL ═══════════════════════
