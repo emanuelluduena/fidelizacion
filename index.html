@@ -115,7 +115,10 @@ tbody td{padding:9px 13px;vertical-align:middle;}
         </div>
         <div class="brow">
           <div class="bus">🔎<input id="cli-buscar" placeholder="Buscar por nombre, email o teléfono..." oninput="renderClientes()"></div>
-          <button class="btn bv" onclick="abrirNuevoCliente()">+ Nuevo cliente</button>
+          <div style="display:flex;gap:8px">
+            <button class="btn bg" onclick="abrirImportar()">📂 Importar CSV</button>
+            <button class="btn bv" onclick="abrirNuevoCliente()">+ Nuevo cliente</button>
+          </div>
         </div>
         <div class="twrap"><table>
           <thead><tr><th>Nombre</th><th>Contacto</th><th>Puntos</th><th>Acciones</th></tr></thead>
@@ -242,6 +245,21 @@ tbody td{padding:9px 13px;vertical-align:middle;}
       <div class="fg"><label>Teléfono (opcional)</label><input id="ncli-tel"></div>
     </div>
     <div class="mfoot"><button class="btn bg" onclick="cerrar('m-cliente')">Cancelar</button><button class="btn bv" onclick="guardarNuevoCliente()">💾 Guardar</button></div>
+  </div>
+</div>
+
+<!-- Modal: importar clientes desde CSV -->
+<div class="modal-bg" id="m-importar">
+  <div class="modal">
+    <div class="mhead">📂 Importar clientes desde CSV</div>
+    <div class="mbody">
+      <div style="font-size:12px;color:#888;background:var(--crema);border-radius:8px;padding:10px 14px">
+        Subí un archivo <strong>.csv</strong> exportado de otro sistema de fidelización. Reconoce columnas como <strong>Nombre</strong> (o Nombres/Apellidos por separado), <strong>Email</strong>, <strong>Teléfono</strong>, <strong>Documento</strong>, <strong>Puntos</strong> y <strong>Cumpleaños</strong> — no hace falta que se llamen exactamente así ni que estén en un orden particular. Los clientes se agregan a tu lista actual, no se borra nada.
+      </div>
+      <div class="fg"><label>Archivo CSV</label><input type="file" id="imp-archivo" accept=".csv,text/csv"></div>
+      <div id="imp-preview" style="font-size:13px;font-weight:600"></div>
+    </div>
+    <div class="mfoot"><button class="btn bg" onclick="cerrar('m-importar')">Cancelar</button><button class="btn bv" id="imp-btn" disabled onclick="confirmarImportar()">📂 Importar</button></div>
   </div>
 </div>
 
@@ -521,6 +539,137 @@ async function eliminarCliente(id){
     toast(`Cliente ${c.nombre} eliminado`);
   }catch(e){ console.error(e); toast('No se pudo eliminar el cliente','r'); }
 }
+
+// ═══════════════════════ IMPORTAR CLIENTES (CSV) ═══════════════════════
+let _importFilas = [];
+
+// Parser CSV simple (soporta comillas, comas y saltos de línea dentro de campos)
+function parseCSV(texto){
+  const filas = [];
+  let fila = [], campo = '', enComillas = false;
+  for(let i=0;i<texto.length;i++){
+    const c = texto[i];
+    if(enComillas){
+      if(c === '"'){
+        if(texto[i+1] === '"'){ campo += '"'; i++; }
+        else enComillas = false;
+      } else campo += c;
+    } else {
+      if(c === '"') enComillas = true;
+      else if(c === ','){ fila.push(campo); campo = ''; }
+      else if(c === '\n'){ fila.push(campo); filas.push(fila); fila = []; campo = ''; }
+      else if(c === '\r'){ /* ignorar */ }
+      else campo += c;
+    }
+  }
+  if(campo.length || fila.length){ fila.push(campo); filas.push(fila); }
+  return filas.filter(f => f.length > 1 || (f[0] && f[0].trim()));
+}
+
+function normalizarHeader(h){
+  return (h||'').trim().toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, '_');
+}
+
+// Reconoce distintos nombres de columna que pueden traer otros sistemas
+function mapearColumnas(headers){
+  const idx = {};
+  headers.forEach((h, i) => {
+    const n = normalizarHeader(h);
+    if(idx.nombre_completo == null && (n === 'nombre' || n === 'nombre_completo' || n === 'cliente')) idx.nombre_completo = i;
+    else if(idx.nombres == null && (n === 'nombres')) idx.nombres = i;
+    else if(idx.apellidos == null && (n === 'apellidos' || n === 'apellido')) idx.apellidos = i;
+    else if(idx.email == null && (n === 'email' || n === 'correo' || n === 'mail' || n === 'e-mail')) idx.email = i;
+    else if(idx.telefono == null && (n === 'telefono' || n === 'celular' || n === 'whatsapp' || n === 'tel')) idx.telefono = i;
+    else if(idx.documento == null && (n.includes('documento') || n === 'dni' || n === 'cuit')) idx.documento = i;
+    else if(idx.puntos == null && n === 'puntos') idx.puntos = i;
+    else if(idx.cumple == null && (n.includes('cumple') || n.includes('nacimiento'))) idx.cumple = i;
+  });
+  return idx;
+}
+
+function abrirImportar(){
+  _importFilas = [];
+  document.getElementById('imp-archivo').value = '';
+  document.getElementById('imp-preview').textContent = '';
+  document.getElementById('imp-preview').style.color = '';
+  document.getElementById('imp-btn').disabled = true;
+  abrir('m-importar');
+}
+
+document.getElementById('imp-archivo').addEventListener('change', async (e) => {
+  const preview = document.getElementById('imp-preview');
+  const btn = document.getElementById('imp-btn');
+  _importFilas = [];
+  btn.disabled = true;
+  preview.style.color = '';
+  const file = e.target.files[0];
+  if(!file) return;
+  let texto;
+  try{ texto = await file.text(); }
+  catch(err){ preview.style.color = 'var(--rojo)'; preview.textContent = 'No se pudo leer el archivo.'; return; }
+
+  const filas = parseCSV(texto);
+  if(filas.length < 2){ preview.style.color = 'var(--rojo)'; preview.textContent = 'El archivo está vacío o no tiene filas de datos.'; return; }
+
+  const headers = filas[0];
+  const idx = mapearColumnas(headers);
+  if(idx.nombre_completo == null && idx.nombres == null){
+    preview.style.color = 'var(--rojo)';
+    preview.textContent = '⚠️ No encontré una columna de nombre. Revisá que el archivo tenga una columna "Nombre" (o "Nombres" y "Apellidos").';
+    return;
+  }
+
+  _importFilas = filas.slice(1).map(f => {
+    const nombre = idx.nombre_completo != null
+      ? (f[idx.nombre_completo] || '').trim()
+      : [f[idx.nombres] || '', idx.apellidos != null ? (f[idx.apellidos] || '') : ''].join(' ').trim();
+    return {
+      nombre: nombre,
+      email: idx.email != null ? ((f[idx.email] || '').trim() || null) : null,
+      telefono: idx.telefono != null ? ((f[idx.telefono] || '').trim() || null) : null,
+      documento: idx.documento != null ? ((f[idx.documento] || '').trim() || null) : null,
+      puntos: idx.puntos != null ? (parseFloat(f[idx.puntos]) || 0) : 0,
+      fecha_cumpleanos: idx.cumple != null ? ((f[idx.cumple] || '').trim() || null) : null,
+    };
+  }).filter(r => r.nombre);
+
+  if(!_importFilas.length){
+    preview.style.color = 'var(--rojo)';
+    preview.textContent = 'No encontré filas con nombre cargado en el archivo.';
+    return;
+  }
+  preview.style.color = 'var(--verde)';
+  preview.textContent = `Se encontraron ${_importFilas.length} cliente(s) listos para importar.`;
+  btn.disabled = false;
+});
+
+async function confirmarImportar(){
+  if(!_importFilas.length) return;
+  if(!confirm(`¿Confirmás importar ${_importFilas.length} cliente(s)? Se agregan a tu lista actual — no se borra ni reemplaza nada existente.`)) return;
+  const btn = document.getElementById('imp-btn');
+  const textoOriginal = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Importando...';
+  try{
+    const lote = 100;
+    let importados = 0;
+    for(let i=0; i<_importFilas.length; i+=lote){
+      const bloque = _importFilas.slice(i, i+lote).map(r => ({ negocio_id: NEGOCIO_ID, ...r }));
+      const res = await sbPost('fidelizacion_clientes', bloque);
+      importados += (res || []).length;
+    }
+    cerrar('m-importar');
+    await cargarClientes(); renderClientes();
+    toast(`✓ Se importaron ${importados} cliente(s)`);
+  }catch(e){
+    console.error(e);
+    toast('Hubo un error importando (revisá que el archivo sea un CSV válido)', 'r');
+  }finally{
+    btn.disabled = false; btn.textContent = textoOriginal;
+  }
+}
+
 // ═══════════════════════ PROMOCIÓN (mail masivo) ═══════════════════════
 const CAMPANA_URL = `${SB_URL}/functions/v1/fidelizacion-campana`;
 function minPuntosParaCanjear(){
