@@ -133,6 +133,15 @@ tbody td{padding:9px 13px;vertical-align:middle;}
         <div style="font-size:12px;color:#888;background:var(--crema);border-radius:8px;padding:10px 14px;margin-bottom:16px">
           💡 <strong>Cómo se usa:</strong> cargá acá los premios que tus clientes van a poder canjear por sus puntos (ej: "10% de descuento", "Café gratis"). Definí cuántos puntos cuesta cada uno. Sin al menos un premio cargado, nadie va a poder canjear todavía.
         </div>
+        <div style="border:1.5px solid var(--verde-suave);border-radius:var(--radio-sm);padding:14px 16px;margin-bottom:18px">
+          <div class="ptit" style="font-size:16px;margin-bottom:6px">🧮 Calculadora de premios</div>
+          <div style="font-size:12px;color:#888;margin-bottom:12px">Te ayuda a poner el precio de tus premios en puntos sin perder plata. Elegí qué porcentaje de lo que compran los clientes querés devolverles y te calculamos cuánto te cuesta cada punto.</div>
+          <div class="fgrid">
+            <div class="fg"><label>Tu margen de ganancia aproximado (%)</label><input type="number" id="calc-margen" min="1" max="100" step="1" value="35" oninput="calcActualizar()"></div>
+            <div class="fg"><label>% de lo que compran que querés devolver</label><input type="number" id="calc-dev" min="0.5" max="50" step="0.5" value="3" oninput="calcActualizar()"></div>
+          </div>
+          <div id="calc-resultado" style="font-size:13px;line-height:1.6"></div>
+        </div>
         <div class="brow"><div class="ptit" style="margin:0">🎁 Premios canjeables</div><button class="btn bv" onclick="abrirNuevoPremio()">+ Nuevo premio</button></div>
         <div class="twrap"><table>
           <thead><tr><th>Premio</th><th>Costo en puntos</th><th>Acciones</th></tr></thead>
@@ -325,6 +334,8 @@ tbody td{padding:9px 13px;vertical-align:middle;}
     <div class="mhead" id="premio-titulo">🎁 Nuevo premio</div>
     <div class="mbody">
       <div class="fg"><label>Nombre del premio</label><input id="premio-nombre"></div>
+      <div class="fg"><label>¿Cuánto te cuesta a vos este premio? ($) <span style="font-weight:400;color:#888">(opcional, para calcular los puntos)</span></label><input type="number" id="premio-costo-pesos" min="0" step="0.01" oninput="premioSugerir()"></div>
+      <div id="premio-sugerido" style="font-size:13px;color:var(--verde);font-weight:600"></div>
       <div class="fg"><label>Costo en puntos</label><input type="number" id="premio-costopts" min="0" step="0.01"></div>
     </div>
     <div class="mfoot"><button class="btn bg" onclick="cerrar('m-premio')">Cancelar</button><button class="btn bv" onclick="guardarPremio()">💾 Guardar</button></div>
@@ -452,6 +463,7 @@ async function entrarApp(){
   await cargarNegocio();
   await Promise.all([cargarClientes(), cargarPremios(), cargarConfig()]);
   renderClientes();
+  calcCargarGuardado();
 }
 
 (async function initSesion(){
@@ -481,6 +493,7 @@ function irA(tab){
   document.getElementById('mod-'+tab).classList.add('activo');
   document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('activo');
   if(tab === 'promo') actualizarPromoDestinatarios();
+  if(tab === 'premios' && typeof calcActualizar === 'function') calcActualizar();
 }
 
 // ═══════════════════════ CLIENTES ═══════════════════════
@@ -829,6 +842,7 @@ async function guardarConfig(){
     if(_config && _config.id){ const r = await sbPatch('fidelizacion_config', _config.id, body); if(r&&r[0]) _config=r[0]; }
     else { const r = await sbPost('fidelizacion_config', body); if(r&&r[0]) _config=r[0]; }
     estado.textContent = 'Guardado ✓'; setTimeout(()=>estado.textContent='',2200);
+    calcActualizar();
   }catch(e){ console.error(e); estado.textContent=''; toast('Error al guardar','r'); }
 }
 
@@ -847,11 +861,56 @@ function renderPremios(){
     <td><button class="btn bg bsm" onclick="editarPremio('${p.id}')">Editar</button>
         <button class="btn br bsm" onclick="borrarPremio('${p.id}')">Desactivar</button></td></tr>`).join('');
 }
+// ── Calculadora de premios ──
+// Cuánto le cuesta al negocio cada punto = (monto por punto / puntos otorgados) × % de devolución
+function calcCostoPunto(){
+  const monto = (_config && _config.monto_por_punto) ? Number(_config.monto_por_punto) : 0;
+  const otorg = (_config && _config.puntos_otorgados) ? Number(_config.puntos_otorgados) : 0;
+  const dev = parseFloat(document.getElementById('calc-dev').value)||0;
+  if(monto<=0 || otorg<=0 || dev<=0) return 0;
+  return (monto/otorg) * (dev/100);
+}
+function calcActualizar(){
+  const el = document.getElementById('calc-resultado');
+  const margen = parseFloat(document.getElementById('calc-margen').value)||0;
+  const dev = parseFloat(document.getElementById('calc-dev').value)||0;
+  try{ localStorage.setItem('fid_calc_margen', String(margen)); localStorage.setItem('fid_calc_dev', String(dev)); }catch(e){}
+  const cp = calcCostoPunto();
+  if(!cp){ el.textContent = 'Configurá primero tu regla de puntos en la pestaña ⚙️ Configuración.'; return; }
+  const monto = Number(_config.monto_por_punto), otorg = Number(_config.puntos_otorgados);
+  let html = `Con tu regla actual (cada ${fmt(monto)} = ${otorg} punto${otorg===1?'':'s'}) y devolviendo el <strong>${dev}%</strong>, cada punto te cuesta <strong>${fmt(Math.round(cp*100)/100)}</strong>.`;
+  html += `<br>Ejemplos: un premio que te cuesta ${fmt(500)} → <strong>${Math.ceil(500/cp)} pts</strong> · uno de ${fmt(1500)} → <strong>${Math.ceil(1500/cp)} pts</strong> · uno de ${fmt(2500)} → <strong>${Math.ceil(2500/cp)} pts</strong>.`;
+  if(margen>0){
+    if(dev > margen/3) html += `<br><span style="color:var(--rojo);font-weight:600">⚠️ Cuidado: devolvés más de un tercio de tu margen (${Math.round(margen/3*10)/10}%). Bajá el % de devolución o subí el costo en puntos de los premios.</span>`;
+    else html += `<br><span style="color:var(--verde);font-weight:600">✓ Está dentro de lo saludable (menos de un tercio de tu margen).</span>`;
+  }
+  el.innerHTML = html;
+}
+function calcCargarGuardado(){
+  try{
+    const m = localStorage.getItem('fid_calc_margen'), d = localStorage.getItem('fid_calc_dev');
+    if(m) document.getElementById('calc-margen').value = m;
+    if(d) document.getElementById('calc-dev').value = d;
+  }catch(e){}
+  calcActualizar();
+}
+function premioSugerir(){
+  const el = document.getElementById('premio-sugerido');
+  const costo = parseFloat(document.getElementById('premio-costo-pesos').value)||0;
+  const cp = calcCostoPunto();
+  if(!(costo>0)){ el.textContent=''; return; }
+  if(!cp){ el.textContent='Configurá tu regla de puntos para poder sugerirte los puntos.'; return; }
+  const pts = Math.ceil(costo/cp);
+  document.getElementById('premio-costopts').value = pts;
+  el.textContent = `Sugerido: ${pts} puntos (equivale a que el cliente gaste unos ${fmt(Math.round(pts*Number(_config.monto_por_punto)/Number(_config.puntos_otorgados)))}). Podés cambiarlo abajo.`;
+}
+
 let _premioEditId = null;
 function abrirNuevoPremio(){
   _premioEditId = null;
   document.getElementById('premio-titulo').textContent = '🎁 Nuevo premio';
   document.getElementById('premio-nombre').value=''; document.getElementById('premio-costopts').value='';
+  document.getElementById('premio-costo-pesos').value=''; document.getElementById('premio-sugerido').textContent='';
   abrir('m-premio');
 }
 function editarPremio(id){
@@ -860,6 +919,7 @@ function editarPremio(id){
   document.getElementById('premio-titulo').textContent = '🎁 Editar premio';
   document.getElementById('premio-nombre').value = p.nombre;
   document.getElementById('premio-costopts').value = p.costo_puntos;
+  document.getElementById('premio-costo-pesos').value=''; document.getElementById('premio-sugerido').textContent='';
   abrir('m-premio');
 }
 async function guardarPremio(){
