@@ -497,16 +497,21 @@ function _tokenExpMs(token){
   try{ const p = JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); return p.exp ? p.exp*1000 : 0; }catch(e){ return 0; }
 }
 
-async function doLogin(){
-  const usr = document.getElementById('login-usr').value.trim();
-  const pass = document.getElementById('login-pass').value;
+let _demoUsuarioElegido = null; // usuario demo que eligió el servidor (para registrar la entrada)
+async function doLogin(modoDemo){
+  const usr = modoDemo ? '' : document.getElementById('login-usr').value.trim();
+  const pass = modoDemo ? '' : document.getElementById('login-pass').value;
   const err = document.getElementById('login-err');
   err.style.display = 'none';
-  if(!usr || !pass){ err.textContent='Completá usuario y contraseña'; err.style.display='block'; return; }
+  if(!modoDemo && (!usr || !pass)){ err.textContent='Completá usuario y contraseña'; err.style.display='block'; return; }
   try{
-    const resp = await fetch(`${SB_URL}/functions/v1/login`, { method:'POST', headers:{'apikey':SB_KEY,'Content-Type':'application/json'}, body:JSON.stringify({ username:usr, password:pass }) });
+    // Modo demo: el servidor elige una cuenta demo al azar y devuelve el token (sin credenciales en el cliente).
+    const resp = modoDemo
+      ? await fetch(`${SB_URL}/functions/v1/login-demo`, { method:'POST', headers:{'apikey':SB_KEY,'Content-Type':'application/json'}, body:JSON.stringify({ app:'fidelizacion' }) })
+      : await fetch(`${SB_URL}/functions/v1/login`, { method:'POST', headers:{'apikey':SB_KEY,'Content-Type':'application/json'}, body:JSON.stringify({ username:usr, password:pass }) });
     const data = await resp.json();
-    if(!resp.ok || !data.token){ err.textContent='Usuario o contraseña incorrectos'; err.style.display='block'; return; }
+    if(!resp.ok || !data.token){ err.textContent = modoDemo ? 'No se pudo abrir la demo. Probá de nuevo en unos segundos.' : 'Usuario o contraseña incorrectos'; err.style.display='block'; return; }
+    if(modoDemo) _demoUsuarioElegido = (data.usuario && data.usuario.username) || null;
     SESSION_TOKEN = data.token;
     NEGOCIO_ID = data.usuario.negocio_id;
     _sesionUsr = data.usuario;
@@ -570,14 +575,11 @@ async function entrarApp(){
   }
   const params = new URLSearchParams(location.search);
   if(params.get('demo') === '1'){
-    const pool = ['fiddemo1','fiddemo2','fiddemo3','fiddemo4','fiddemo5','fiddemo6','fiddemo7','fiddemo8','fiddemo9','fiddemo10'];
-    const elegido = pool[Math.floor(Math.random()*pool.length)];
-    document.getElementById('login-usr').value = elegido;
-    document.getElementById('login-pass').value = 'Demo1234';
-    await doLogin();
+    // La cuenta demo la elige el servidor (Edge Function login-demo): acá ya no hay usuarios ni contraseñas.
+    await doLogin(true);
     const exito = !!SESSION_TOKEN;
     const detalle = exito ? null : document.getElementById('login-err').textContent;
-    notificarDemoLogin(elegido, exito, detalle);
+    notificarDemoLogin(_demoUsuarioElegido || 'desconocido', exito, detalle);
   }
 })();
 // ═══════════════════════ NAVEGACIÓN ═══════════════════════
