@@ -92,7 +92,7 @@ tbody td{padding:9px 13px;vertical-align:middle;}
 <div id="app-wrap" style="display:none">
   <header>
     <div class="hlogo"><span class="ic">🎁</span><div><div class="nombre">Fidelización</div><div class="sub" id="hdr-negocio"></div></div></div>
-    <div class="hinfo"><span id="hdr-usr"></span><button onclick="doLogout()">Salir</button></div>
+    <div class="hinfo"><span id="hdr-usr"></span><button onclick="salirClick()">Salir</button></div>
   </header>
   <nav>
     <button class="tab activo" data-tab="clientes" onclick="irA('clientes')">👥 Clientes</button>
@@ -342,6 +342,30 @@ tbody td{padding:9px 13px;vertical-align:middle;}
   </div>
 </div>
 
+<!-- Modal: popup de salida (solo demo) -->
+<div class="modal-bg" id="m-demo-salida">
+  <div class="modal" style="max-width:380px;text-align:center">
+    <div class="mhead">👋 ¿Te vas ya?</div>
+    <div class="mbody">
+      <p style="color:#64748b;font-size:14px">¿Te quedaste con ganas de ver más? Hablemos y lo vemos con los datos de tu negocio.</p>
+      <button class="btn bv" style="width:100%;justify-content:center" onclick="contactarWhatsappDemo()">💬 Tengo una duda, hablemos</button>
+      <div style="border-top:1px solid #e2e8f0;padding-top:14px">
+        <div style="font-size:13px;color:#64748b;margin-bottom:8px">¿Qué te pareció la demo?</div>
+        <div style="display:flex;gap:10px;justify-content:center">
+          <button class="btn bg" id="demo-fb-si" style="font-size:20px;padding:8px 16px" onclick="marcarFeedbackDemo('si')">👍</button>
+          <button class="btn bg" id="demo-fb-no" style="font-size:20px;padding:8px 16px" onclick="marcarFeedbackDemo('no')">👎</button>
+        </div>
+        <div id="demo-fb-no-box" style="display:none;margin-top:12px">
+          <textarea id="demo-feedback-txt" rows="3" style="width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:10px;font-family:inherit;font-size:14px" placeholder="¿Qué no te gustó o qué te faltó? (opcional)"></textarea>
+          <button class="btn bv" style="margin-top:8px" onclick="enviarFeedbackDemoNegativo()">Enviar</button>
+        </div>
+      </div>
+      <button class="btn bg" style="justify-content:center;font-size:13px" onclick="cerrar('m-demo-salida')">Seguir viendo la demo</button>
+      <div style="font-size:12px;color:#94a3b8;cursor:pointer;text-decoration:underline" onclick="salirSinMas()">Salir sin más</div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -402,6 +426,72 @@ function fmt(n){ return '$'+Number(n||0).toLocaleString('es-AR'); }
 function cerrar(id){ document.getElementById(id).classList.remove('activo'); }
 function abrir(id){ document.getElementById(id).classList.add('activo'); }
 
+// ═══ Popup de salida en la demo (igual que Mi Gestor) ═══
+// Se muestra al tocar "Salir", al irse con el mouse hacia arriba de la pantalla o tras 3 minutos
+// sin actividad. Los avisos pasan por la función alertas-soporte (Slack).
+const ALERTAS_URL = `${SB_URL}/functions/v1/alertas-soporte`;
+const WA_DEMO = '5493515426971';
+let ES_DEMO = false;            // true cuando la cuenta con la que se entró es de demo
+let _demoPopupMostrado = false; // los disparadores pasivos saltan una sola vez por sesión
+let _demoSentimiento = null;    // 'si' | 'no' | null
+
+function avisarSoporte(tipo, mensaje){
+  try{
+    fetch(ALERTAS_URL, {
+      method:'POST', headers:{'Content-Type':'application/json'}, keepalive:true,
+      body: JSON.stringify({ tipo, negocio_id: NEGOCIO_ID || 'fidelizacion-demo', negocio_nombre: 'Mi Gestor Fidelización (demo)', mensaje })
+    }).catch(()=>{});
+  }catch(e){}
+}
+function hayModalAbierto(){ return !!document.querySelector('.modal-bg.activo'); }
+function mostrarPopupSalidaDemo(forzar){
+  if(!ES_DEMO) return;
+  if(document.getElementById('m-demo-salida').classList.contains('activo')) return;
+  // un clic explícito en "Salir" siempre abre el popup; los pasivos no interrumpen otro modal abierto
+  if(!forzar && (_demoPopupMostrado || hayModalAbierto())) return;
+  _demoPopupMostrado = true;
+  _demoSentimiento = null;
+  ['demo-fb-si','demo-fb-no'].forEach(id=>{ document.getElementById(id).style.background=''; });
+  document.getElementById('demo-fb-no-box').style.display = 'none';
+  abrir('m-demo-salida');
+}
+function marcarFeedbackDemo(valor){
+  _demoSentimiento = valor;
+  document.getElementById('demo-fb-si').style.background = valor==='si' ? 'var(--verde-suave)' : '';
+  document.getElementById('demo-fb-no').style.background = valor==='no' ? 'var(--verde-suave)' : '';
+  if(valor==='no'){ document.getElementById('demo-fb-no-box').style.display='block'; }
+  else{
+    document.getElementById('demo-fb-no-box').style.display='none';
+    avisarSoporte('fidelizacion-demo-feedback-positivo','👍 Le gustó la demo');
+    toast('¡Qué bueno! Gracias 🙌');
+  }
+}
+function enviarFeedbackDemoNegativo(){
+  const texto = document.getElementById('demo-feedback-txt').value.trim();
+  avisarSoporte('fidelizacion-demo-feedback-negativo', texto || '(sin comentario)');
+  cerrar('m-demo-salida');
+  toast('Gracias, tu opinión nos ayuda a crecer 🙏');
+}
+function contactarWhatsappDemo(){
+  let texto = 'Hola! Estuve probando la demo de Mi Gestor Fidelización';
+  if(_demoSentimiento==='si') texto += ' y me gustó 👍.';
+  else if(_demoSentimiento==='no') texto += ', quería comentarles algo.';
+  else texto += '.';
+  texto += ' Tengo una duda.';
+  avisarSoporte('fidelizacion-demo-interes','Tocó "Tengo una duda, hablemos" en el popup de salida');
+  window.open('https://wa.me/'+WA_DEMO+'?text='+encodeURIComponent(texto), '_blank', 'noopener');
+  cerrar('m-demo-salida');
+}
+function salirSinMas(){ cerrar('m-demo-salida'); doLogout(); }
+function salirClick(){ if(ES_DEMO) mostrarPopupSalidaDemo(true); else doLogout(); }
+(function(){
+  document.addEventListener('mouseout', function(e){ if(ES_DEMO && !e.relatedTarget && e.clientY<=0) mostrarPopupSalidaDemo(); });
+  let t = null;
+  function rst(){ clearTimeout(t); t = setTimeout(function(){ mostrarPopupSalidaDemo(); }, 3*60*1000); }
+  ['mousemove','keydown','click','touchstart','scroll'].forEach(function(ev){ document.addEventListener(ev, rst, {passive:true}); });
+  rst();
+})();
+
 // ═══════════════════════ LOGIN ═══════════════════════
 function _tokenExpMs(token){
   try{ const p = JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); return p.exp ? p.exp*1000 : 0; }catch(e){ return 0; }
@@ -424,13 +514,14 @@ async function doLogin(){
       // Si es una cuenta de demo: arranca a contar 2 días desde el primer login.
     const negChequeo = await sbGet('negocios', `id=eq.${NEGOCIO_ID}&select=es_demo,demo_primer_uso`);
     const info = negChequeo?.[0];
+    ES_DEMO = !!info?.es_demo;
     if(info?.es_demo){
       if(!info.demo_primer_uso){
         await sbPatch('negocios', NEGOCIO_ID, { demo_primer_uso: new Date().toISOString() });
       } else {
         const vence = new Date(new Date(info.demo_primer_uso).getTime() + 2*24*60*60*1000);
         if(new Date() > vence){
-          SESSION_TOKEN = null;
+          SESSION_TOKEN = null; ES_DEMO = false;
           err.textContent = 'Esta demo venció. Contactanos para seguir probándola.';
           err.style.display = 'block';
           return;
@@ -441,6 +532,7 @@ async function doLogin(){
     localStorage.setItem('fid_token', SESSION_TOKEN);
     localStorage.setItem('fid_tokenExp', String(_tokenExpMs(SESSION_TOKEN)));
     localStorage.setItem('fid_negocioId', NEGOCIO_ID);
+    localStorage.setItem('fid_esDemo', ES_DEMO ? '1' : '0');
     await entrarApp();
   }catch(e){
     console.error(e);
@@ -449,7 +541,8 @@ async function doLogin(){
 }
 
 function doLogout(){
-  SESSION_TOKEN = null; NEGOCIO_ID = null; _sesionUsr = null;
+  SESSION_TOKEN = null; NEGOCIO_ID = null; _sesionUsr = null; ES_DEMO = false;
+  localStorage.removeItem('fid_esDemo');
   localStorage.removeItem('fid_token'); localStorage.removeItem('fid_tokenExp'); localStorage.removeItem('fid_negocioId');
   document.getElementById('app-wrap').style.display = 'none';
   document.getElementById('login-wrap').style.display = 'flex';
@@ -472,6 +565,7 @@ async function entrarApp(){
   const neg = localStorage.getItem('fid_negocioId');
   if(tok && neg && Date.now() < exp){
     SESSION_TOKEN = tok; NEGOCIO_ID = neg;
+    ES_DEMO = localStorage.getItem('fid_esDemo') === '1';
     try{ await entrarApp(); return; }catch(e){ doLogout(); }
   }
   const params = new URLSearchParams(location.search);
